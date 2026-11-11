@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cis-auditor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cis-auditor
+  template:
+    metadata:
+      labels:
+        app: cis-auditor
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+      containers:
+        - name: cis-auditor
+          image: cis-auditor-api:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cis-auditor-svc
+spec:
+  type: NodePort
+  selector:
+    app: cis-auditor
+  ports:
+    - port: 8000
+      targetPort: 8000
+      nodePort: 30880

@@ -1,0 +1,68 @@
+name: DevSecOps Network & Container Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  # 1. Tự động chạy công cụ kiểm toán cấu hình mạng CIS Benchmark
+  cis-network-audit:
+    name: 1. CIS Cisco IOS Config Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run CIS Benchmark Audit on Hardened Config
+        run: |
+          python src/auditor.py configs/router_hardened.cfg
+
+      - name: Upload HTML & JSON Audit Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: cis-audit-reports
+          path: |
+            audit_report.json
+            audit_report.html
+
+  # 2. Tự động quét mã nguồn tìm kiếm thông tin bí mật bị lộ
+  secret-scanning:
+    name: 2. Secret Scanning (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run Gitleaks Secret Scanner
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 3. Tự động build và quét lỗ hổng container (Sẽ PASS vì đã dùng bản OS an toàn)
+  container-trivy-scan:
+    name: 3. Build & Trivy Vulnerability Scan
+    runs-on: ubuntu-latest
+    needs: [cis-network-audit, secret-scanning]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run: |
+          docker build -t cis-auditor-api:1.0.0 ./src
+
+      - name: Run Trivy vulnerability scanner (FAIL on CRITICAL)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "cis-auditor-api:1.0.0"
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL"

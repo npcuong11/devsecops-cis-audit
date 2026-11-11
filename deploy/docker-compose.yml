@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  cis-auditor:
+    build: ../src
+    image: cis-auditor-api:1.0.0
+    container_name: cis-auditor-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../configs:/configs:ro
+    read_only: true
