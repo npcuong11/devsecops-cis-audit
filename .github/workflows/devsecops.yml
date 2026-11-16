@@ -12,7 +12,7 @@ permissions:
 
 jobs:
 
-  # GIAI ĐOẠN 1: CIS NETWORK AUDIT
+  # GIAI DOAN 1: CIS NETWORK AUDIT
   cis-network-audit:
     name: CIS Cisco IOS Audit
     runs-on: ubuntu-latest
@@ -64,7 +64,7 @@ jobs:
             audit_report_*.html
           if-no-files-found: error
 
-  # GIAI ĐOẠN 2: SECRET SCANNING
+  # GIAI DOAN 2: SECRET SCANNING
   secret-scanning:
     name: Gitleaks Secret Scan
     runs-on: ubuntu-latest
@@ -80,7 +80,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # GIAI ĐOẠN 3: CONTAINER VULNERABILITY SCAN
+  # GIAI DOAN 3: CONTAINER VULNERABILITY SCAN
   container-trivy-scan:
     name: Docker Build and Trivy Scan
     runs-on: ubuntu-latest
@@ -100,7 +100,7 @@ jobs:
             ./src
 
       - name: Scan Docker Image with Trivy
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@master
         with:
           image-ref: cis-auditor-api:1.0.0
           format: table
