@@ -1,19 +1,34 @@
+
 FROM python:3.11-slim-bookworm
 
-# Cập nhật OS để không bị Trivy báo lỗi CRITICAL
-RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-# Tạo user non-root để an toàn tuyệt đối
-RUN useradd -m -u 10001 appuser
+# Cập nhật hệ điều hành
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    rm -rf /var/lib/apt/lists/*
+
+# Tạo tài khoản không có quyền Root
+RUN useradd --create-home --uid 10001 appuser
 
 WORKDIR /app
+
+# Cài thư viện
 COPY requirements.txt .
+
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
+# Sao chép mã nguồn
 COPY auditor.py main.py ./
-RUN chown -R appuser:appuser /app
 
-USER 10001
+# Phân quyền ứng dụng
+RUN chown -R 10001:10001 /app
+
+# Chạy bằng UID 10001
+USER 10001:10001
+
 EXPOSE 8000
+
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

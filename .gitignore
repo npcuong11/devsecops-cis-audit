@@ -1,0 +1,5 @@
+__pycache__/
+*.py[cod]
+cis-auditor-api.tar
+audit_report_*.html
+audit_report_*.json
